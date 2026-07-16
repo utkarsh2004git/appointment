@@ -24,6 +24,7 @@ TECH STACK & VERSIONS:
 - Thymeleaf for the frontend module only (web-client)
 - JWT library: io.jsonwebtoken (jjwt) version 0.13.0, using the three-artifact setup (jjwt-api, jjwt-impl at runtime scope, jjwt-jackson at runtime scope) — NOT the old single jjwt artifact. Use the modern SecretKey-based fluent API introduced in jjwt 0.12+: build a SecretKey once via Keys.hmacShaKeyFor(secretBytes) or Jwts.SIG.HS256.key().build(), sign tokens with Jwts.builder()...signWith(secretKey)...compact(), and parse/validate tokens with Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token). Do NOT use the deprecated 0.11.x-style APIs — specifically avoid Jwts.parserBuilder(), .setSigningKey(), and .parseClaimsJws(), all of which are removed/deprecated in current jjwt.
 - Testing: JUnit 5 and Mockito for unit tests (mocking dependencies to test business logic in isolation), Testcontainers (PostgreSQL module) for integration tests that run against a real, ephemeral database rather than an in-memory substitute. Target a minimum of ~70% line coverage per service — this feeds directly into the SonarQube quality gate configured in the CI/CD stage.
+- Use ModelMapper (org.modelmapper:modelmapper) for all Entity-to-DTO and DTO-to-Entity conversions instead of writing manual field-by-field mapping code — configure one shared ModelMapper @Bean per service and inject it into services/controllers wherever a conversion is needed.
 
 ARCHITECTURE:
 - eureka-server: service registry, port 8761
