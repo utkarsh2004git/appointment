@@ -42,8 +42,6 @@ IMPORTANT DESIGN RULE: Each service has its OWN database. This means there are N
 
 SECURITY MODEL: JWT is issued by auth-service and validated once at the api-gateway. The gateway then forwards the authenticated user's ID and role as plain headers (X-User-Id, X-User-Role) to downstream services — those services trust these headers rather than re-validating the JWT themselves.
 
-ENVIRONMENT CONSTRAINT — IMPORTANT: My machine does NOT have Maven installed globally. For every service you generate, include the Maven Wrapper (mvnw, mvnw.cmd, and the .mvn/wrapper/maven-wrapper.properties file) so the project can be built with ./mvnw instead of a global mvn installation. Do NOT attempt to run mvn directly to build, test, or verify anything — always use ./mvnw (or ./mvnw.cmd on Windows) in any command you suggest or run. Do not try to execute build/test commands yourself to "verify" the code unless you use the wrapper script; I will build and test manually on my end.
-
 I'll give you one prompt per service to generate it fully. Please confirm you understand this setup, then wait for my next message with the first service.
 ```
 
