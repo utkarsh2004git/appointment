@@ -123,27 +123,21 @@ Package base: com.appointment.auth
 
 ```
 Create a complete Spring Boot microservice named patient-service using Spring Boot 4.1.0, Java 25.
-
 Include:
 - pom.xml with: spring-boot-starter-web, spring-boot-starter-data-jpa, postgresql (org.postgresql:postgresql), spring-cloud-starter-netflix-eureka-client, lombok
-
 ENTITY (no JPA relationship to User — userId is just a plain foreign-key-style field since User lives in auth-service's own database):
-- Patient: id (Long, PK), userId (Long, not null, references the User created in auth-service — NOT a JPA relationship, just store the ID), dob (LocalDate), address (String), medicalHistory (String, can be long text — use @Column(columnDefinition = "TEXT")), emergencyContact (String), createdAt (LocalDateTime, default now)
-
-VALIDATION on PatientRequest DTO: dob @NotNull @Past; address @NotBlank @Size(max=255); emergencyContact @NotBlank @Pattern for a basic phone number format. IMPORTANT: PatientRequest must NOT contain a userId field — the userId is never accepted from the client, it is always read from the trusted X-User-Id header set by the Gateway (see controller notes below), so it cannot be spoofed by sending an arbitrary value in the request body.
-
+- Patient: id (Long, PK), userId (Long, not null, references the User created in auth-service — NOT a JPA relationship, just store the ID), dob (LocalDate), address (String), medicalHistory (String, can be long text — use @Column(columnDefinition = "TEXT")), contactNumber (String), createdAt (LocalDateTime, default now)
+VALIDATION on PatientRequest DTO: dob @NotNull @Past; address @NotBlank @Size(max=255); contactNumber @NotBlank @Pattern(regexp = "^[0-9+\\-\\s]{7,15}$", message = "invalid phone number format"). IMPORTANT: PatientRequest must NOT contain a userId field — the userId is never accepted from the client, it is always read from the trusted X-User-Id header set by the Gateway (see controller notes below), so it cannot be spoofed by sending an arbitrary value in the request body.
 LAYERS:
 - PatientRepository with a findByUserId(Long userId) method
 - PatientService with createProfile(PatientRequest dto), getByUserId(Long userId), updateProfile(Long userId, PatientRequest dto)
 - PatientController with:
-  - POST /patients — create profile. Do NOT take userId from the request body — read it from the X-User-Id header (set by the Gateway after JWT validation) and use that as the Patient's userId. The request body (PatientRequest) only contains profile fields (dob, address, medicalHistory, emergencyContact) — no identity fields at all.
+  - POST /patients — create profile. Do NOT take userId from the request body — read it from the X-User-Id header (set by the Gateway after JWT validation) and use that as the Patient's userId. The request body (PatientRequest) only contains profile fields (dob, address, medicalHistory, contactNumber) — no identity fields at all.
   - GET /patients/{userId} — fetch profile
   - PUT /patients/{userId} — update profile
   - All write operations should read X-User-Id and X-User-Role headers from the request (these are set upstream by the API Gateway after JWT validation) and reject with 403 if X-User-Role is not PATIENT or ADMIN, or if X-User-Id doesn't match the userId being created/modified (unless role is ADMIN) — this guarantees a patient can only ever create or edit their own profile, never someone else's, since the userId always comes from their own verified JWT rather than anything they typed or sent
-
 CONFIG:
 - application.yml on port 8082, Eureka registration, PostgreSQL database patient_db (driver org.postgresql.Driver, dialect PostgreSQLDialect), ddl-auto=update
-
 Package base: com.appointment.patient
 ```
 
@@ -153,18 +147,14 @@ Package base: com.appointment.patient
 
 ```
 Create a complete Spring Boot microservice named doctor-service using Spring Boot 4.1.0, Java 25.
-
 Include:
 - pom.xml with: spring-boot-starter-web, spring-boot-starter-data-jpa, postgresql (org.postgresql:postgresql), spring-cloud-starter-netflix-eureka-client, lombok
-
 ENTITIES with a REAL JPA relationship between them (both live in this service's own database):
-- Doctor: id (Long, PK), userId (Long, not null — plain field referencing auth-service's User, NOT a JPA relationship since that's a different database), specialization (String), qualification (String), experienceYears (Integer), consultationFee (BigDecimal)
+- Doctor: id (Long, PK), userId (Long, not null — plain field referencing auth-service's User, NOT a JPA relationship since that's a different database), name (String, the doctor's full name), specialization (String), qualification (String), experienceYears (Integer), consultationFee (BigDecimal), contactNumber (String)
   - Has a @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY) List<Slot> slots
 - Slot: id (Long, PK), date (LocalDate), startTime (LocalTime), endTime (LocalTime), isBooked (boolean, default false)
   - Has a @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "doctor_id") Doctor doctor
-
-VALIDATION on request DTOs: DoctorRequest — specialization @NotBlank; qualification @NotBlank; experienceYears @NotNull @Min(0) @Max(60); consultationFee @NotNull @DecimalMin("0.0") (IMPORTANT: DoctorRequest must NOT contain a userId field — see controller notes below for why). SlotRequest — date @NotNull @FutureOrPresent; startTime @NotNull; endTime @NotNull (add a class-level check or service-layer check that endTime is after startTime)
-
+VALIDATION on request DTOs: DoctorRequest — name @NotBlank; specialization @NotBlank; qualification @NotBlank; experienceYears @NotNull @Min(0) @Max(60); consultationFee @NotNull @DecimalMin("0.0"); contactNumber @NotBlank @Pattern(regexp = "^[0-9+\\-\\s]{7,15}$", message = "invalid phone number format") (IMPORTANT: DoctorRequest must NOT contain a userId field — see controller notes below for why). SlotRequest — date @NotNull @FutureOrPresent; startTime @NotNull; endTime @NotNull (add a class-level check or service-layer check that endTime is after startTime)
 LAYERS:
 - DoctorRepository with findBySpecialization(String specialization) and findByUserId(Long userId)
 - SlotRepository with findByDoctorIdAndIsBookedFalse(Long doctorId)
@@ -178,10 +168,8 @@ LAYERS:
   - GET /doctors/slots/{slotId} — fetch single slot (needed by appointment-service via Feign)
   - PUT /doctors/slots/{slotId}/book — mark a slot as booked (called internally by appointment-service)
 - Use DTOs, not entities, in request/response bodies to avoid lazy-loading serialization issues
-
 CONFIG:
 - application.yml on port 8083, Eureka registration, PostgreSQL database doctor_db (driver org.postgresql.Driver, dialect PostgreSQLDialect), ddl-auto=update
-
 Package base: com.appointment.doctor
 ```
 
