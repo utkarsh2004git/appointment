@@ -180,13 +180,13 @@ server.port: 8081
 spring.application.name: auth-service
 spring.datasource.url: jdbc:postgresql://localhost:5432/auth_db
 spring.datasource.username: postgres
-spring.datasource.password: root
+spring.datasource.password: 
 spring.jpa.hibernate.ddl-auto: update
 spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.show-sql: true
 eureka.client.service-url.defaultZone: http://localhost:8761/eureka/
 eureka.instance.prefer-ip-address: true
-jwt.secret: "9a76a9645915e8b4e28cdb1a62d1039a3f2fbfa39ef5e90d79432f831969a531"
+jwt.secret: ""
 ```
 
 ---
@@ -247,7 +247,7 @@ eureka.client.service-url.defaultZone: http://localhost:8761/eureka/
 eureka.instance.prefer-ip-address: true
 management.endpoints.web.exposure.include: "*"
 logging.level.org.springframework.cloud.gateway: TRACE
-jwt.secret: "9a76a9645915e8b4e28cdb1a62d1039a3f2fbfa39ef5e90d79432f831969a531"
+jwt.secret: ""
 ```
 
 ---
@@ -339,7 +339,7 @@ spring.application.name: patient-service
 spring.jackson.datatype.datetime.write-dates-as-timestamps: false
 spring.datasource.url: jdbc:postgresql://localhost:5432/patient_db
 spring.datasource.username: postgres
-spring.datasource.password: root
+spring.datasource.password: 
 spring.jpa.hibernate.ddl-auto: update
 spring.jpa.properties.hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.show-sql: true
